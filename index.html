@@ -54,8 +54,8 @@
           <span>Salvar na Nuvem</span>
         </button>
 
-        <!-- Botão Novo Equipamento -->
-        <button onclick="abrirModal()" class="bg-emerald-600 hover:bg-emerald-500 text-white font-medium text-sm px-4 py-2.5 rounded-lg transition flex items-center gap-2 shadow-lg shadow-emerald-900/20">
+        <!-- Botão Novo Equipamento (Protegido por Senha) -->
+        <button onclick="solicitarSenhaCadastro()" class="bg-emerald-600 hover:bg-emerald-500 text-white font-medium text-sm px-4 py-2.5 rounded-lg transition flex items-center gap-2 shadow-lg shadow-emerald-900/20">
           <i data-lucide="plus-circle" class="w-4 h-4"></i> Novo Equipamento
         </button>
       </div>
@@ -111,7 +111,7 @@
 
     </section>
 
-    <!-- NOVA SEÇÃO: Descrição e Detalhes dos Equipamentos Vencidos -->
+    <!-- Seção: Descrição e Detalhes dos Equipamentos Vencidos -->
     <section class="bg-slate-800/60 p-5 rounded-2xl border border-slate-700/50">
       <div class="flex items-center justify-between mb-4">
         <h2 class="text-base font-semibold text-white flex items-center gap-2">
@@ -208,6 +208,30 @@
     </div>
   </div>
 
+  <!-- MODAL DE SENHA -->
+  <div id="modalSenha" class="fixed inset-0 bg-slate-950/80 backdrop-blur-sm z-50 flex items-center justify-center hidden p-4">
+    <div class="bg-slate-800 border border-slate-700 rounded-2xl w-full max-w-sm overflow-hidden shadow-2xl">
+      <div class="p-5 border-b border-slate-700 flex justify-between items-center">
+        <h3 class="text-base font-bold text-white flex items-center gap-2">
+          <i data-lucide="lock" class="text-amber-400 w-4 h-4"></i> Autenticação Necessária
+        </h3>
+        <button onclick="fecharModalSenha()" class="text-slate-400 hover:text-white transition">
+          <i data-lucide="x" class="w-5 h-5"></i>
+        </button>
+      </div>
+      <div class="p-5 space-y-4">
+        <div>
+          <label class="block text-xs font-semibold uppercase text-slate-400 mb-1">Digite a senha de cadastro</label>
+          <input type="password" id="inputSenhaMaster" placeholder="Insira a senha" onkeydown="if(event.key === 'Enter') verificarSenha();" class="w-full bg-slate-900 border border-slate-700 rounded-lg p-2.5 text-slate-100 text-sm focus:border-blue-500 focus:outline-none">
+        </div>
+        <div class="flex justify-end gap-2 pt-2">
+          <button type="button" onclick="fecharModalSenha()" class="px-3 py-2 bg-slate-700 hover:bg-slate-600 text-slate-200 text-xs font-medium rounded-lg transition">Cancelar</button>
+          <button type="button" onclick="verificarSenha()" class="px-3 py-2 bg-blue-600 hover:bg-blue-500 text-white text-xs font-medium rounded-lg transition">Liberar</button>
+        </div>
+      </div>
+    </div>
+  </div>
+
   <script>
     lucide.createIcons();
 
@@ -215,6 +239,7 @@
 
     let meuGraficoBarras = null;
     let meuGraficoPizza = null;
+    let acaoAposSenha = null;
 
     const firebaseConfig = {
       apiKey: "AIzaSyDvm-FqoigGt_VS_ARApMFgKCRM8RHR1eI",
@@ -650,7 +675,7 @@
           <td class="px-6 py-4">${badgeStatus}</td>
           <td class="px-6 py-4 text-center">
             <div class="flex items-center justify-center gap-1">
-              <button onclick="editarEquipamento(${index})" title="Editar" class="p-1.5 hover:bg-slate-700 rounded text-slate-400 hover:text-white transition">
+              <button onclick="solicitarSenhaEdicao(${index})" title="Editar" class="p-1.5 hover:bg-slate-700 rounded text-slate-400 hover:text-white transition">
                 <i data-lucide="edit-3" class="w-4 h-4"></i>
               </button>
               <button onclick="excluirEquipamento(${index})" title="Eliminar" class="p-1.5 hover:bg-slate-700 rounded text-slate-400 hover:text-rose-400 transition">
@@ -687,16 +712,78 @@
       atualizarGraficos(equipamentosEmDia, equipamentosVencidos);
     }
 
-    function abrirModal() {
+    // Fluxo de Senha para Cadastro / Edição corrigido com manipulação explícita de classes Tailwind
+    function solicitarSenhaCadastro() {
+      acaoAposSenha = () => abrirModalCadastro();
+      abrirModalSenha();
+    }
+
+    function solicitarSenhaEdicao(index) {
+      acaoAposSenha = () => abrirModalEdicao(index);
+      abrirModalSenha();
+    }
+
+    function abrirModalSenha() {
+      document.getElementById('inputSenhaMaster').value = '';
+      const modal = document.getElementById('modalSenha');
+      modal.classList.remove('hidden');
+      modal.classList.add('flex');
+    }
+
+    function fecharModalSenha() {
+      const modal = document.getElementById('modalSenha');
+      modal.classList.remove('flex');
+      modal.classList.add('hidden');
+    }
+
+    function verificarSenha() {
+      const senhaInformada = document.getElementById('inputSenhaMaster').value;
+
+      if (senhaInformada === "MMAVC") {
+        fecharModalSenha();
+        if (acaoAposSenha) {
+          const callback = acaoAposSenha;
+          acaoAposSenha = null;
+          setTimeout(() => {
+            callback();
+          }, 150);
+        }
+      } else {
+        mostrarToast("Senha incorreta! Acesso negado.", true);
+      }
+    }
+
+    function abrirModalCadastro() {
       document.getElementById('inputIndex').value = "-1";
       document.getElementById('modalTitulo').innerText = 'Cadastrar Equipamento';
       document.getElementById('formEquipamento').reset();
       document.getElementById('inputPeriodicidade').value = 36;
-      document.getElementById('modalEquipamento').classList.remove('hidden');
+      
+      const modal = document.getElementById('modalEquipamento');
+      modal.classList.remove('hidden');
+      modal.classList.add('flex');
+    }
+
+    function abrirModalEdicao(index) {
+      const item = equipamentos[index];
+      document.getElementById('inputIndex').value = index;
+      document.getElementById('modalTitulo').innerText = 'Editar Equipamento';
+      document.getElementById('inputID').value = item.id;
+      document.getElementById('inputNome').value = item.nome;
+      document.getElementById('inputUsuario').value = item.usuario;
+      document.getElementById('inputUltimaTroca').value = item.ultimaTroca || '';
+      document.getElementById('inputPeriodicidade').value = item.periodicidade || 36;
+      document.getElementById('inputDataPrevista').value = item.proximaTroca || '';
+      
+      const modal = document.getElementById('modalEquipamento');
+      modal.classList.remove('hidden');
+      modal.classList.add('flex');
     }
 
     function fecharModal() {
-      document.getElementById('modalEquipamento').classList.add('hidden');
+      const modal = document.getElementById('modalEquipamento');
+      modal.classList.remove('flex');
+      modal.classList.add('hidden');
     }
 
     function calcularProximaTroca() {
@@ -734,19 +821,6 @@
       fecharModal();
       atualizarStatusNuvem('pendente', 'Alterações pendentes (Clique em Salvar)');
       mostrarToast("Alteração registrada! Clique em 'Salvar na Nuvem'.");
-    }
-
-    function editarEquipamento(index) {
-      const item = equipamentos[index];
-      document.getElementById('inputIndex').value = index;
-      document.getElementById('modalTitulo').innerText = 'Editar Equipamento';
-      document.getElementById('inputID').value = item.id;
-      document.getElementById('inputNome').value = item.nome;
-      document.getElementById('inputUsuario').value = item.usuario;
-      document.getElementById('inputUltimaTroca').value = item.ultimaTroca || '';
-      document.getElementById('inputPeriodicidade').value = item.periodicidade || 36;
-      document.getElementById('inputDataPrevista').value = item.proximaTroca || '';
-      document.getElementById('modalEquipamento').classList.remove('hidden');
     }
 
     function excluirEquipamento(index) {

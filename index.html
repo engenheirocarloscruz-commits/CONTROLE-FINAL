@@ -56,7 +56,7 @@
 
         <!-- Botão Novo Equipamento (Protegido por Senha) -->
         <button onclick="solicitarSenhaCadastro()" class="bg-emerald-600 hover:bg-emerald-500 text-white font-medium text-sm px-4 py-2.5 rounded-lg transition flex items-center gap-2 shadow-lg shadow-emerald-900/20">
-          <i data-lucide="plus-circle" class="w-4 h-4"></i> Novo Equipamento
+          <i data-lucide="plus-circle" class="w-4 h-4"></i> Novo Ativo
         </button>
       </div>
     </header>
@@ -65,10 +65,10 @@
     <section class="grid grid-cols-1 sm:grid-cols-2 gap-4">
       <div class="bg-slate-800/60 p-5 rounded-2xl border border-slate-700/50">
         <div class="flex justify-between items-start text-slate-400 mb-2">
-          <span class="text-xs font-semibold uppercase tracking-wider">Equipamentos em Dia</span>
+          <span class="text-xs font-semibold uppercase tracking-wider">Ativos em Dia</span>
           <i data-lucide="check-circle-2" class="w-5 h-5 text-emerald-400"></i>
         </div>
-        <div class="text-2xl font-bold text-white"><span id="kpiEquipamentosEmDia">0</span> <span class="text-sm font-normal text-slate-400">equipamentos</span></div>
+        <div class="text-2xl font-bold text-white"><span id="kpiEquipamentosEmDia">0</span> <span class="text-sm font-normal text-slate-400">itens</span></div>
         <p class="text-xs text-emerald-400 mt-2 flex items-center gap-1">
           <i data-lucide="shield-check" class="w-3 h-3"></i> Dentro do prazo previsto para troca
         </p>
@@ -76,10 +76,10 @@
 
       <div class="bg-slate-800/60 p-5 rounded-2xl border border-slate-700/50">
         <div class="flex justify-between items-start text-slate-400 mb-2">
-          <span class="text-xs font-semibold uppercase tracking-wider">Equipamentos Vencidos</span>
+          <span class="text-xs font-semibold uppercase tracking-wider">Ativos Vencidos</span>
           <i data-lucide="clock" class="w-5 h-5 text-rose-400"></i>
         </div>
-        <div class="text-2xl font-bold text-white"><span id="kpiTrocasPendentes">0</span> <span class="text-sm font-normal text-slate-400">equipamentos</span></div>
+        <div class="text-2xl font-bold text-white"><span id="kpiTrocasPendentes">0</span> <span class="text-sm font-normal text-slate-400">itens</span></div>
         <p class="text-xs text-rose-400 mt-2 flex items-center gap-1">
           <i data-lucide="alert-circle" class="w-3 h-3"></i> Prazo de troca ultrapassado (Atrasados)
         </p>
@@ -115,7 +115,7 @@
     <section class="bg-slate-800/60 p-5 rounded-2xl border border-slate-700/50">
       <div class="flex items-center justify-between mb-4">
         <h2 class="text-base font-semibold text-white flex items-center gap-2">
-          <i data-lucide="alert-triangle" class="w-4 h-4 text-rose-400"></i> Equipamentos Vencidos - Detalhes de Atraso
+          <i data-lucide="alert-triangle" class="w-4 h-4 text-rose-400"></i> Ativos Vencidos - Detalhes de Atraso
         </h2>
         <span id="contadorVencidosBadge" class="text-xs bg-rose-500/10 text-rose-400 border border-rose-500/20 px-2.5 py-1 rounded-full font-medium">0 pendências</span>
       </div>
@@ -138,7 +138,8 @@
           <thead class="text-xs uppercase bg-slate-900/50 text-slate-400 border-b border-slate-700/50">
             <tr>
               <th class="px-6 py-3">ID Ativo</th>
-              <th class="px-6 py-3">Equipamento</th>
+              <th class="px-6 py-3">Tipo</th>
+              <th class="px-6 py-3">Descrição / Ativo</th>
               <th class="px-6 py-3">Usuário</th>
               <th class="px-6 py-3">Última Troca</th>
               <th class="px-6 py-3">Periodicidade</th>
@@ -159,7 +160,7 @@
     <div class="bg-slate-800 border border-slate-700 rounded-2xl w-full max-w-xl overflow-hidden shadow-2xl">
       <div class="p-5 border-b border-slate-700 flex justify-between items-center">
         <h3 id="modalTitulo" class="text-lg font-bold text-white flex items-center gap-2">
-          <i data-lucide="laptop" class="text-blue-400"></i> Cadastrar Equipamento
+          <i data-lucide="laptop" class="text-blue-400"></i> Cadastrar Ativo
         </h3>
         <button onclick="fecharModal()" class="text-slate-400 hover:text-white transition">
           <i data-lucide="x" class="w-5 h-5"></i>
@@ -174,9 +175,18 @@
             <input type="text" id="inputID" required placeholder="Ex: PAT-2026-001" class="w-full bg-slate-900 border border-slate-700 rounded-lg p-2.5 text-slate-100 text-sm focus:border-blue-500 focus:outline-none">
           </div>
           <div>
-            <label class="block text-xs font-semibold uppercase text-slate-400 mb-1">Equipamento</label>
-            <input type="text" id="inputNome" required placeholder="Ex: Dell Vostro 5510" class="w-full bg-slate-900 border border-slate-700 rounded-lg p-2.5 text-slate-100 text-sm focus:border-blue-500 focus:outline-none">
+            <label class="block text-xs font-semibold uppercase text-slate-400 mb-1">Tipo de Ativo</label>
+            <select id="inputTipo" required class="w-full bg-slate-900 border border-slate-700 rounded-lg p-2.5 text-slate-100 text-sm focus:border-blue-500 focus:outline-none">
+              <option value="Equipamento">Equipamento</option>
+              <option value="Componente">Componente</option>
+            </select>
           </div>
+
+          <div class="md:col-span-2">
+            <label class="block text-xs font-semibold uppercase text-slate-400 mb-1">Nome do Equipamento / Componente</label>
+            <input type="text" id="inputNome" required placeholder="Ex: Dell Vostro 5510 ou SSD 1TB Kingston" class="w-full bg-slate-900 border border-slate-700 rounded-lg p-2.5 text-slate-100 text-sm focus:border-blue-500 focus:outline-none">
+          </div>
+          
           <div class="md:col-span-2">
             <label class="block text-xs font-semibold uppercase text-slate-400 mb-1">Usuário Responsável</label>
             <input type="text" id="inputUsuario" required placeholder="Ex: João Silva" class="w-full bg-slate-900 border border-slate-700 rounded-lg p-2.5 text-slate-100 text-sm focus:border-blue-500 focus:outline-none">
@@ -282,8 +292,8 @@
     }
 
     let equipamentos = [
-      { id: "PAT-2024-089", nome: "Dell Latitude 3420", usuario: "Mariana Costa", ultimaTroca: "2023-09-15", periodicidade: 36, proximaTroca: "2026-09-15", status: "Agendado" },
-      { id: "PAT-2024-112", nome: 'MacBook Pro 14"', usuario: "Carlos Eduardo", ultimaTroca: "2024-09-22", periodicidade: 24, proximaTroca: "2026-10-22", status: "Agendado" }
+      { id: "PAT-2024-089", tipo: "Equipamento", nome: "Dell Latitude 3420", usuario: "Mariana Costa", ultimaTroca: "2023-09-15", periodicidade: 36, proximaTroca: "2026-09-15", status: "Agendado" },
+      { id: "PAT-2024-112", tipo: "Equipamento", nome: 'MacBook Pro 14"', usuario: "Carlos Eduardo", ultimaTroca: "2024-09-22", periodicidade: 24, proximaTroca: "2026-10-22", status: "Agendado" }
     ];
 
     const dadosLocais = localStorage.getItem('controlapt_equipamentos');
@@ -309,6 +319,7 @@
             const data = doc.data();
             dadosNuvem.push({
               id: data.id || "",
+              tipo: data.tipo || "Equipamento",
               nome: data.nome || "",
               usuario: data.usuario || "",
               ultimaTroca: data.ultimaTroca || "",
@@ -351,6 +362,7 @@
             const newRef = db.collection("equipamentos").doc();
             batch.set(newRef, {
               id: item.id || "",
+              tipo: item.tipo || "Equipamento",
               nome: item.nome || "",
               usuario: item.usuario || "",
               ultimaTroca: item.ultimaTroca || "",
@@ -395,14 +407,14 @@
 
       doc.setFontSize(16);
       doc.setTextColor(30, 41, 59);
-      doc.text("Relatório Analítico de Gestão de Equipamentos", 14, 18);
+      doc.text("Relatório Analítico de Gestão de Ativos", 14, 18);
 
       doc.setFontSize(10);
       doc.setTextColor(100, 116, 139);
       doc.text(`Gerado em: ${dataFormatada} | Sistema ControlApt`, 14, 25);
 
       const colunas = [
-        ["ID Ativo", "Equipamento", "Usuário", "Última Troca", "Periodicidade", "Próxima Troca", "Dias Restantes", "Vida Útil", "Risco"]
+        ["ID Ativo", "Tipo", "Descrição", "Usuário", "Última Troca", "Periodicidade", "Próxima Troca", "Dias Restantes", "Vida Útil", "Risco"]
       ];
 
       const linhas = equipamentos.map(item => {
@@ -420,6 +432,7 @@
 
         return [
           item.id || "-",
+          item.tipo || "Equipamento",
           item.nome || "-",
           item.usuario || "-",
           formatarDataBR(item.ultimaTroca),
@@ -445,7 +458,7 @@
         alternateRowStyles: { fillColor: [248, 250, 252] },
         styles: { fontSize: 8.5, cellPadding: 3, verticalAlign: 'middle' },
         didParseCell: function (data) {
-          if (data.section === 'body' && data.column.index === 8) {
+          if (data.section === 'body' && data.column.index === 9) {
             const val = data.cell.raw;
             if (val === 'CRÍTICO') {
               data.cell.styles.textColor = [225, 29, 72];
@@ -548,12 +561,12 @@
                       const nomes = context.dataset.nomesEquipamentos ? context.dataset.nomesEquipamentos[index] : [];
                       
                       if (qtd === 0) {
-                        return 'Nenhum equipamento previsto';
+                        return 'Nenhum ativo previsto';
                       }
                       
                       return [
-                        `Total: ${qtd} equipamento(s)`,
-                        `Ativos: ${nomes.join(', ')}`
+                        `Total: ${qtd} item(ns)`,
+                        `Itens: ${nomes.join(', ')}`
                       ];
                     }
                   }
@@ -628,34 +641,30 @@
 
       let equipamentosVencidos = 0;
       let equipamentosEmDia = 0;
-      let listaVencidosHTML = '';
+      let arrayVencidos = [];
 
       equipamentos.forEach((item, index) => {
         const dProxima = item.proximaTroca ? new Date(item.proximaTroca + 'T00:00:00') : hoje;
         const diasRestantes = Math.round((dProxima - hoje) / (1000 * 60 * 60 * 24));
         
         let badgeStatus = '<span class="px-2 py-1 text-xs rounded-full bg-blue-500/10 text-blue-400 border border-blue-500/20">Agendado</span>';
+        const tipoAtivo = item.tipo || "Equipamento";
         
+        let badgeTipo = tipoAtivo === 'Componente' 
+          ? '<span class="px-2 py-0.5 text-[11px] rounded bg-purple-500/10 text-purple-400 border border-purple-500/20 font-medium">Componente</span>'
+          : '<span class="px-2 py-0.5 text-[11px] rounded bg-cyan-500/10 text-cyan-400 border border-cyan-500/20 font-medium">Equipamento</span>';
+
         if (diasRestantes < 0) {
           badgeStatus = '<span class="px-2 py-1 text-xs rounded-full bg-rose-500/10 text-rose-400 border border-rose-500/20">Atrasado</span>';
           equipamentosVencidos++;
           
           const diasAtraso = Math.abs(diasRestantes);
-          listaVencidosHTML += `
-            <div class="bg-slate-900/60 border border-rose-500/30 rounded-xl p-3 flex flex-col justify-between gap-2 shadow-sm">
-              <div class="flex justify-between items-start">
-                <span class="font-mono text-xs text-rose-400 font-semibold">${item.id}</span>
-                <span class="text-xs bg-rose-500/20 text-rose-300 px-2 py-0.5 rounded-md font-bold">${diasAtraso} ${diasAtraso === 1 ? 'dia de atraso' : 'dias de atraso'}</span>
-              </div>
-              <div>
-                <h4 class="text-white text-sm font-semibold truncate">${item.nome}</h4>
-                <p class="text-xs text-slate-400">Usuário: <span class="text-slate-200">${item.usuario}</span></p>
-              </div>
-              <div class="text-[11px] text-slate-400 border-t border-slate-800 pt-1 mt-1 flex justify-between">
-                <span>Vencimento: <strong class="text-slate-300">${formatarDataBR(item.proximaTroca)}</strong></span>
-              </div>
-            </div>
-          `;
+          arrayVencidos.push({
+            item,
+            tipoAtivo,
+            diasAtraso,
+            badgeTipo
+          });
         } else {
           equipamentosEmDia++;
           if (diasRestantes <= 30) {
@@ -667,6 +676,7 @@
         tr.className = 'hover:bg-slate-700/20 transition';
         tr.innerHTML = `
           <td class="px-6 py-4 font-mono text-xs text-blue-400">${item.id}</td>
+          <td class="px-6 py-4">${badgeTipo}</td>
           <td class="px-6 py-4 font-medium text-white">${item.nome}</td>
           <td class="px-6 py-4">${item.usuario}</td>
           <td class="px-6 py-4">${formatarDataBR(item.ultimaTroca)}</td>
@@ -687,6 +697,39 @@
         tabela.appendChild(tr);
       });
 
+      // Ordenar itens vencidos conforme a nova regra:
+      // 1. Componentes primeiro (tipoAtivo === 'Componente'), depois Equipamentos.
+      // 2. Maior tempo vencido primeiro (diasAtraso decrescente).
+      arrayVencidos.sort((a, b) => {
+        const isCompA = a.tipoAtivo === 'Componente' ? 1 : 0;
+        const isCompB = b.tipoAtivo === 'Componente' ? 1 : 0;
+
+        if (isCompA !== isCompB) {
+          return isCompB - isCompA; // Componentes (1) vêm antes de Equipamentos (0)
+        }
+        return b.diasAtraso - a.diasAtraso; // Maior tempo vencido primeiro
+      });
+
+      let listaVencidosHTML = '';
+      arrayVencidos.forEach(v => {
+        listaVencidosHTML += `
+          <div class="bg-slate-900/60 border border-rose-500/30 rounded-xl p-3 flex flex-col justify-between gap-2 shadow-sm">
+            <div class="flex justify-between items-start">
+              <span class="font-mono text-xs text-rose-400 font-semibold">${v.item.id}</span>
+              <span class="text-xs bg-rose-500/20 text-rose-300 px-2 py-0.5 rounded-md font-bold">${v.diasAtraso} ${v.diasAtraso === 1 ? 'dia de atraso' : 'dias de atraso'}</span>
+            </div>
+            <div>
+              <div class="mb-1">${v.badgeTipo}</div>
+              <h4 class="text-white text-sm font-semibold truncate">${v.item.nome}</h4>
+              <p class="text-xs text-slate-400">Usuário: <span class="text-slate-200">${v.item.usuario}</span></p>
+            </div>
+            <div class="text-[11px] text-slate-400 border-t border-slate-800 pt-1 mt-1 flex justify-between">
+              <span>Vencimento: <strong class="text-slate-300">${formatarDataBR(v.item.proximaTroca)}</strong></span>
+            </div>
+          </div>
+        `;
+      });
+
       // Atualizar bloco visual de vencidos
       const containerVencidos = document.getElementById('listaEquipamentosVencidos');
       const badgeVencidosCount = document.getElementById('contadorVencidosBadge');
@@ -695,7 +738,7 @@
         containerVencidos.innerHTML = `
           <div class="col-span-full py-6 text-center text-slate-400 text-sm flex flex-col items-center justify-center gap-2">
             <i data-lucide="shield-check" class="w-8 h-8 text-emerald-400"></i>
-            <span>Nenhum equipamento vencido no momento. Todos estão em dia!</span>
+            <span>Nenhum ativo vencido no momento. Todos estão em dia!</span>
           </div>
         `;
         badgeVencidosCount.innerText = '0 pendências';
@@ -712,7 +755,6 @@
       atualizarGraficos(equipamentosEmDia, equipamentosVencidos);
     }
 
-    // Fluxo de Senha para Cadastro / Edição corrigido com manipulação explícita de classes Tailwind
     function solicitarSenhaCadastro() {
       acaoAposSenha = () => abrirModalCadastro();
       abrirModalSenha();
@@ -755,8 +797,9 @@
 
     function abrirModalCadastro() {
       document.getElementById('inputIndex').value = "-1";
-      document.getElementById('modalTitulo').innerText = 'Cadastrar Equipamento';
+      document.getElementById('modalTitulo').innerText = 'Cadastrar Ativo';
       document.getElementById('formEquipamento').reset();
+      document.getElementById('inputTipo').value = 'Equipamento';
       document.getElementById('inputPeriodicidade').value = 36;
       
       const modal = document.getElementById('modalEquipamento');
@@ -767,8 +810,9 @@
     function abrirModalEdicao(index) {
       const item = equipamentos[index];
       document.getElementById('inputIndex').value = index;
-      document.getElementById('modalTitulo').innerText = 'Editar Equipamento';
+      document.getElementById('modalTitulo').innerText = 'Editar Ativo';
       document.getElementById('inputID').value = item.id;
+      document.getElementById('inputTipo').value = item.tipo || 'Equipamento';
       document.getElementById('inputNome').value = item.nome;
       document.getElementById('inputUsuario').value = item.usuario;
       document.getElementById('inputUltimaTroca').value = item.ultimaTroca || '';
@@ -803,6 +847,7 @@
       const index = parseInt(document.getElementById('inputIndex').value);
       const itemNovo = {
         id: document.getElementById('inputID').value,
+        tipo: document.getElementById('inputTipo').value,
         nome: document.getElementById('inputNome').value,
         usuario: document.getElementById('inputUsuario').value,
         ultimaTroca: document.getElementById('inputUltimaTroca').value,
@@ -824,11 +869,11 @@
     }
 
     function excluirEquipamento(index) {
-      if (confirm('Tem certeza que deseja eliminar este equipamento?')) {
+      if (confirm('Tem certeza que deseja eliminar este registro?')) {
         equipamentos.splice(index, 1);
         renderizarTabela();
         atualizarStatusNuvem('pendente', 'Alterações pendentes (Clique em Salvar)');
-        mostrarToast("Equipamento removido. Clique em 'Salvar na Nuvem'.");
+        mostrarToast("Ativo removido. Clique em 'Salvar na Nuvem'.");
       }
     }
   </script>

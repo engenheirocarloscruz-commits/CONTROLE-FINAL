@@ -61,47 +61,66 @@
       </div>
     </header>
 
-    <!-- KPIs Topo (3 Cards Operacionais) -->
-    <section class="grid grid-cols-1 sm:grid-cols-3 gap-4">
+    <!-- KPIs Topo (2 Cards Operacionais) -->
+    <section class="grid grid-cols-1 sm:grid-cols-2 gap-4">
       <div class="bg-slate-800/60 p-5 rounded-2xl border border-slate-700/50">
         <div class="flex justify-between items-start text-slate-400 mb-2">
-          <span class="text-xs font-semibold uppercase tracking-wider">Total de Ativos</span>
-          <i data-lucide="laptop" class="w-5 h-5 text-blue-400"></i>
+          <span class="text-xs font-semibold uppercase tracking-wider">Equipamentos em Dia</span>
+          <i data-lucide="check-circle-2" class="w-5 h-5 text-emerald-400"></i>
         </div>
-        <div class="text-2xl font-bold text-white"><span id="kpiTotalAtivos">0</span> <span class="text-sm font-normal text-slate-400">equipamentos</span></div>
+        <div class="text-2xl font-bold text-white"><span id="kpiEquipamentosEmDia">0</span> <span class="text-sm font-normal text-slate-400">equipamentos</span></div>
         <p class="text-xs text-emerald-400 mt-2 flex items-center gap-1">
-          <i data-lucide="check-circle-2" class="w-3 h-3"></i> Equipamentos em uso ativo
+          <i data-lucide="shield-check" class="w-3 h-3"></i> Dentro do prazo previsto para troca
         </p>
       </div>
 
       <div class="bg-slate-800/60 p-5 rounded-2xl border border-slate-700/50">
         <div class="flex justify-between items-start text-slate-400 mb-2">
-          <span class="text-xs font-semibold uppercase tracking-wider">Trocas Pendentes</span>
-          <i data-lucide="clock" class="w-5 h-5 text-amber-400"></i>
+          <span class="text-xs font-semibold uppercase tracking-wider">Equipamentos Vencidos</span>
+          <i data-lucide="clock" class="w-5 h-5 text-rose-400"></i>
         </div>
-        <div class="text-2xl font-bold text-white"><span id="kpiTrocasPendentes">0</span> <span class="text-sm font-normal text-slate-400">este mês</span></div>
-        <p class="text-xs text-amber-400 mt-2 flex items-center gap-1">
-          <i data-lucide="alert-circle" class="w-3 h-3"></i> Requerem atenção
+        <div class="text-2xl font-bold text-white"><span id="kpiTrocasPendentes">0</span> <span class="text-sm font-normal text-slate-400">equipamentos</span></div>
+        <p class="text-xs text-rose-400 mt-2 flex items-center gap-1">
+          <i data-lucide="alert-circle" class="w-3 h-3"></i> Prazo de troca ultrapassado (Atrasados)
         </p>
-      </div>
-
-      <div class="bg-slate-800/60 p-5 rounded-2xl border border-slate-700/50">
-        <div class="flex justify-between items-start text-slate-400 mb-2">
-          <span class="text-xs font-semibold uppercase tracking-wider">Fim de Vida Útil (90d)</span>
-          <i data-lucide="calendar-off" class="w-5 h-5 text-rose-400"></i>
-        </div>
-        <div class="text-2xl font-bold text-white"><span id="kpiFimVida">0</span> <span class="text-sm font-normal text-slate-400">equipamentos</span></div>
-        <p class="text-xs text-slate-400 mt-2">Garantia ou ciclo próximo do limite</p>
       </div>
     </section>
 
-    <!-- Gráfico Principal -->
+    <!-- Seção de Gráficos e Alertas (Lado a Lado) -->
+    <section class="grid grid-cols-1 lg:grid-cols-3 gap-6">
+      
+      <!-- Gráfico de Barras (Previsão de Substituições) - Ocupa 2 colunas no desktop -->
+      <div class="lg:col-span-2 bg-slate-800/60 p-5 rounded-2xl border border-slate-700/50 flex flex-col justify-between">
+        <h2 class="text-base font-semibold text-white mb-4 flex items-center gap-2">
+          <i data-lucide="bar-chart-3" class="w-4 h-4 text-blue-400"></i> Previsão de Substituições (Próximos 12 Meses)
+        </h2>
+        <div class="h-64 relative">
+          <canvas id="forecastChart"></canvas>
+        </div>
+      </div>
+
+      <!-- Gráfico de Pizza (Status Operacional %) -->
+      <div class="bg-slate-800/60 p-5 rounded-2xl border border-slate-700/50 flex flex-col justify-between">
+        <h2 class="text-base font-semibold text-white mb-4 flex items-center gap-2">
+          <i data-lucide="pie-chart" class="w-4 h-4 text-emerald-400"></i> Status dos Ativos (%)
+        </h2>
+        <div class="h-64 relative flex items-center justify-center">
+          <canvas id="pieChart"></canvas>
+        </div>
+      </div>
+
+    </section>
+
+    <!-- NOVA SEÇÃO: Descrição e Detalhes dos Equipamentos Vencidos -->
     <section class="bg-slate-800/60 p-5 rounded-2xl border border-slate-700/50">
-      <h2 class="text-base font-semibold text-white mb-4 flex items-center gap-2">
-        <i data-lucide="bar-chart-3" class="w-4 h-4 text-blue-400"></i> Previsão de Substituições (Próximos 12 Meses)
-      </h2>
-      <div class="h-72">
-        <canvas id="forecastChart"></canvas>
+      <div class="flex items-center justify-between mb-4">
+        <h2 class="text-base font-semibold text-white flex items-center gap-2">
+          <i data-lucide="alert-triangle" class="w-4 h-4 text-rose-400"></i> Equipamentos Vencidos - Detalhes de Atraso
+        </h2>
+        <span id="contadorVencidosBadge" class="text-xs bg-rose-500/10 text-rose-400 border border-rose-500/20 px-2.5 py-1 rounded-full font-medium">0 pendências</span>
+      </div>
+      <div id="listaEquipamentosVencidos" class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-3">
+        <!-- Preenchido via JavaScript dinamicamente -->
       </div>
     </section>
 
@@ -192,13 +211,11 @@
   <script>
     lucide.createIcons();
 
-    // REGISTRA O PLUGIN DE DATALABELS NO CHART.JS
     Chart.register(ChartDataLabels);
 
-    // VARIÁVEL GLOBAL PARA O GRÁFICO
-    let meuGrafico = null;
+    let meuGraficoBarras = null;
+    let meuGraficoPizza = null;
 
-    // 1. CONFIGURAÇÃO DO FIREBASE
     const firebaseConfig = {
       apiKey: "AIzaSyDvm-FqoigGt_VS_ARApMFgKCRM8RHR1eI",
       authDomain: "troca-de-equipamentos.firebaseapp.com",
@@ -239,7 +256,6 @@
       }
     }
 
-    // 2. ESTADO DOS DADOS
     let equipamentos = [
       { id: "PAT-2024-089", nome: "Dell Latitude 3420", usuario: "Mariana Costa", ultimaTroca: "2023-09-15", periodicidade: 36, proximaTroca: "2026-09-15", status: "Agendado" },
       { id: "PAT-2024-112", nome: 'MacBook Pro 14"', usuario: "Carlos Eduardo", ultimaTroca: "2024-09-22", periodicidade: 24, proximaTroca: "2026-10-22", status: "Agendado" }
@@ -256,7 +272,6 @@
       renderizarTabela();
     }
 
-    // 3. OPERAÇÕES FIRESTORE
     async function carregarDaNuvem() {
       if (!firebaseAtivo) return;
       atualizarStatusNuvem('salvando', 'Carregando dados...');
@@ -341,7 +356,6 @@
       }, 600);
     }
 
-    // 4. EXPORTAÇÃO DO RELATÓRIO ANALÍTICO EM PDF
     function exportarRelatorioAnaliticoPDF() {
       if (!equipamentos || equipamentos.length === 0) {
         mostrarToast("Nenhum dado disponível para exportação.", true);
@@ -351,26 +365,24 @@
       const { jsPDF } = window.jspdf;
       const doc = new jsPDF({ orientation: 'landscape', unit: 'mm', format: 'a4' });
       const hoje = new Date();
+      hoje.setHours(0, 0, 0, 0);
       const dataFormatada = hoje.toLocaleDateString('pt-BR');
 
-      // Título do Relatório
       doc.setFontSize(16);
-      doc.setTextColor(30, 41, 59); // Slate 800
+      doc.setTextColor(30, 41, 59);
       doc.text("Relatório Analítico de Gestão de Equipamentos", 14, 18);
 
-      // Subtítulo e Metadados
       doc.setFontSize(10);
-      doc.setTextColor(100, 116, 139); // Slate 500
+      doc.setTextColor(100, 116, 139);
       doc.text(`Gerado em: ${dataFormatada} | Sistema ControlApt`, 14, 25);
 
-      // Definição das colunas e linhas
       const colunas = [
         ["ID Ativo", "Equipamento", "Usuário", "Última Troca", "Periodicidade", "Próxima Troca", "Dias Restantes", "Vida Útil", "Risco"]
       ];
 
       const linhas = equipamentos.map(item => {
-        const dUltima = item.ultimaTroca ? new Date(item.ultimaTroca) : hoje;
-        const dProxima = item.proximaTroca ? new Date(item.proximaTroca) : hoje;
+        const dUltima = item.ultimaTroca ? new Date(item.ultimaTroca + 'T00:00:00') : hoje;
+        const dProxima = item.proximaTroca ? new Date(item.proximaTroca + 'T00:00:00') : hoje;
         const totalDiasCiclo = Math.max(1, (dProxima - dUltima) / (1000 * 60 * 60 * 24));
         const diasDecorridos = (hoje - dUltima) / (1000 * 60 * 60 * 24);
         const diasRestantes = Math.round((dProxima - hoje) / (1000 * 60 * 60 * 24));
@@ -394,7 +406,6 @@
         ];
       });
 
-      // Geração da Tabela com AutoTable
       doc.autoTable({
         head: colunas,
         body: linhas,
@@ -409,7 +420,6 @@
         alternateRowStyles: { fillColor: [248, 250, 252] },
         styles: { fontSize: 8.5, cellPadding: 3, verticalAlign: 'middle' },
         didParseCell: function (data) {
-          // Destacar cores baseadas no nível de risco na coluna 'Risco'
           if (data.section === 'body' && data.column.index === 8) {
             const val = data.cell.raw;
             if (val === 'CRÍTICO') {
@@ -427,7 +437,6 @@
         }
       });
 
-      // Salva o documento PDF
       doc.save(`relatorio_analitico_${hoje.toISOString().split('T')[0]}.pdf`);
       mostrarToast("Relatório PDF gerado com sucesso!");
     }
@@ -445,93 +454,140 @@
       }, 4000);
     }
 
-    // 5. ATUALIZAR GRÁFICO EXIBINDO NOME DO EQUIPAMENTO DENTRO DA BARRA VERTICAL
-    function atualizarGrafico() {
-      const ctx = document.getElementById('forecastChart');
-      if (!ctx) return;
+    function atualizarGraficos(emDia, vencidos) {
+      const ctxBarras = document.getElementById('forecastChart');
+      if (ctxBarras) {
+        const hoje = new Date();
+        const anoAtual = hoje.getFullYear();
+        const mesAtual = hoje.getMonth();
 
-      const hoje = new Date();
-      const anoAtual = hoje.getFullYear();
-      const mesAtual = hoje.getMonth();
+        const mesesNomes = ['Jan', 'Fev', 'Mar', 'Abr', 'Mai', 'Jun', 'Jul', 'Ago', 'Set', 'Out', 'Nov', 'Dez'];
+        const labelsGrafico = [];
+        const dadosGrafico = Array(12).fill(0);
+        const nomesPorMes = Array(12).fill(null).map(() => []);
 
-      const mesesNomes = ['Jan', 'Fev', 'Mar', 'Abr', 'Mai', 'Jun', 'Jul', 'Ago', 'Set', 'Out', 'Nov', 'Dez'];
-      const labelsGrafico = [];
-      const dadosGrafico = Array(12).fill(0);
-      const nomesPorMes = Array(12).fill(null).map(() => []);
-
-      for (let i = 0; i < 12; i++) {
-        let mesIndex = (mesAtual + i) % 12;
-        let anoOffset = Math.floor((mesAtual + i) / 12);
-        let anoStr = String(anoAtual + anoOffset).slice(-2);
-        labelsGrafico.push(`${mesesNomes[mesIndex]}/${anoStr}`);
-      }
-
-      equipamentos.forEach(item => {
-        if (!item.proximaTroca) return;
-        
-        const partes = item.proximaTroca.split('-');
-        if (partes.length !== 3) return;
-        
-        const anoTroca = parseInt(partes[0]);
-        const mesTroca = parseInt(partes[1]) - 1;
-
-        const diferencaMeses = (anoTroca - anoAtual) * 12 + (mesTroca - mesAtual);
-
-        if (diferencaMeses >= 0 && diferencaMeses < 12) {
-          dadosGrafico[diferencaMeses]++;
-          nomesPorMes[diferencaMeses].push(item.nome);
+        for (let i = 0; i < 12; i++) {
+          let mesIndex = (mesAtual + i) % 12;
+          let anoOffset = Math.floor((mesAtual + i) / 12);
+          let anoStr = String(anoAtual + anoOffset).slice(-2);
+          labelsGrafico.push(`${mesesNomes[mesIndex]}/${anoStr}`);
         }
-      });
 
-      if (meuGrafico) {
-        meuGrafico.data.labels = labelsGrafico;
-        meuGrafico.data.datasets[0].data = dadosGrafico;
-        meuGrafico.data.datasets[0].nomesEquipamentos = nomesPorMes;
-        meuGrafico.update();
-      } else {
-        meuGrafico = new Chart(ctx.getContext('2d'), {
-          type: 'bar',
-          data: {
-            labels: labelsGrafico,
-            datasets: [{ 
-              label: 'Trocas Planejadas', 
-              data: dadosGrafico, 
-              nomesEquipamentos: nomesPorMes,
-              backgroundColor: '#3b82f6', 
-              borderRadius: 6 
-            }]
-          },
-          options: { 
-            responsive: true, 
-            maintainAspectRatio: false, 
-            plugins: { 
-              legend: { display: false },
-              datalabels: {
-                color: '#ffffff',
-                anchor: 'center',
-                align: 'center',
-                rotation: -90,
-                font: {
-                  weight: '600',
-                  size: 10
-                },
-                formatter: function(value, context) {
-                  const index = context.dataIndex;
-                  const nomes = context.dataset.nomesEquipamentos ? context.dataset.nomesEquipamentos[index] : [];
-                  return nomes.length > 0 ? nomes.join(', ') : '';
-                }
-              }
-            }, 
-            scales: { 
-              x: { grid: { display: false }, ticks: { color: '#94a3b8' } }, 
-              y: { grid: { color: '#334155' }, ticks: { color: '#94a3b8', stepSize: 1 } } 
-            } 
+        equipamentos.forEach(item => {
+          if (!item.proximaTroca) return;
+          const partes = item.proximaTroca.split('-');
+          if (partes.length !== 3) return;
+          
+          const anoTroca = parseInt(partes[0]);
+          const mesTroca = parseInt(partes[1]) - 1;
+          const diferencaMeses = (anoTroca - anoAtual) * 12 + (mesTroca - mesAtual);
+
+          if (diferencaMeses >= 0 && diferencaMeses < 12) {
+            dadosGrafico[diferencaMeses]++;
+            nomesPorMes[diferencaMeses].push(item.nome);
           }
         });
+
+        if (meuGraficoBarras) {
+          meuGraficoBarras.data.labels = labelsGrafico;
+          meuGraficoBarras.data.datasets[0].data = dadosGrafico;
+          meuGraficoBarras.data.datasets[0].nomesEquipamentos = nomesPorMes;
+          meuGraficoBarras.update();
+        } else {
+          meuGraficoBarras = new Chart(ctxBarras.getContext('2d'), {
+            type: 'bar',
+            data: {
+              labels: labelsGrafico,
+              datasets: [{ 
+                label: 'Trocas Planejadas', 
+                data: dadosGrafico, 
+                nomesEquipamentos: nomesPorMes,
+                backgroundColor: '#3b82f6', 
+                borderRadius: 6 
+              }]
+            },
+            options: { 
+              responsive: true, 
+              maintainAspectRatio: false,
+              plugins: { 
+                legend: { display: false },
+                datalabels: { display: false },
+                tooltip: {
+                  callbacks: {
+                    title: function(context) {
+                      return `Mês: ${context[0].label}`;
+                    },
+                    label: function(context) {
+                      const index = context.dataIndex;
+                      const qtd = context.raw;
+                      const nomes = context.dataset.nomesEquipamentos ? context.dataset.nomesEquipamentos[index] : [];
+                      
+                      if (qtd === 0) {
+                        return 'Nenhum equipamento previsto';
+                      }
+                      
+                      return [
+                        `Total: ${qtd} equipamento(s)`,
+                        `Ativos: ${nomes.join(', ')}`
+                      ];
+                    }
+                  }
+                }
+              }, 
+              scales: { 
+                x: { grid: { display: false }, ticks: { color: '#94a3b8' } }, 
+                y: { grid: { color: '#334155' }, ticks: { color: '#94a3b8', stepSize: 1 } } 
+              } 
+            }
+          });
+        }
+      }
+
+      const ctxPizza = document.getElementById('pieChart');
+      if (ctxPizza) {
+        if (meuGraficoPizza) {
+          meuGraficoPizza.data.datasets[0].data = [emDia, vencidos];
+          meuGraficoPizza.update();
+        } else {
+          meuGraficoPizza = new Chart(ctxPizza.getContext('2d'), {
+            type: 'pie',
+            data: {
+              labels: ['Em Dia', 'Vencidos'],
+              datasets: [{
+                data: [emDia, vencidos],
+                backgroundColor: ['#10b981', '#f43f5e'],
+                borderWidth: 2,
+                borderColor: '#1e293b'
+              }]
+            },
+            options: {
+              responsive: true,
+              maintainAspectRatio: false,
+              plugins: {
+                legend: {
+                  position: 'bottom',
+                  labels: { color: '#cbd5e1', font: { size: 12 } }
+                },
+                datalabels: {
+                  color: '#ffffff',
+                  font: { weight: 'bold', size: 13 },
+                  formatter: function(value, ctx) {
+                    const dataset = ctx.chart.data.datasets[0].data;
+                    const totalAtual = dataset.reduce((acc, curr) => acc + curr, 0);
+
+                    if (!totalAtual || totalAtual === 0) return '0%';
+
+                    const pct = ((value / totalAtual) * 100).toFixed(1);
+                    return `${pct}%`;
+                  }
+                }
+              }
+            }
+          });
+        }
       }
     }
 
-    // 6. INTERFACE E TABELA
     function formatarDataBR(dataIso) {
       if (!dataIso) return '-';
       const partes = dataIso.split('-');
@@ -543,21 +599,43 @@
       const tabela = document.getElementById('tabelaCorpo');
       tabela.innerHTML = '';
       const hoje = new Date();
+      hoje.setHours(0, 0, 0, 0);
 
-      let trocasPendentes = 0;
+      let equipamentosVencidos = 0;
+      let equipamentosEmDia = 0;
+      let listaVencidosHTML = '';
 
       equipamentos.forEach((item, index) => {
-        const dProxima = item.proximaTroca ? new Date(item.proximaTroca) : hoje;
+        const dProxima = item.proximaTroca ? new Date(item.proximaTroca + 'T00:00:00') : hoje;
         const diasRestantes = Math.round((dProxima - hoje) / (1000 * 60 * 60 * 24));
         
         let badgeStatus = '<span class="px-2 py-1 text-xs rounded-full bg-blue-500/10 text-blue-400 border border-blue-500/20">Agendado</span>';
         
         if (diasRestantes < 0) {
           badgeStatus = '<span class="px-2 py-1 text-xs rounded-full bg-rose-500/10 text-rose-400 border border-rose-500/20">Atrasado</span>';
-          trocasPendentes++;
-        } else if (diasRestantes <= 30) {
-          badgeStatus = '<span class="px-2 py-1 text-xs rounded-full bg-amber-500/10 text-amber-400 border border-amber-500/20">Próximo (30d)</span>';
-          trocasPendentes++;
+          equipamentosVencidos++;
+          
+          const diasAtraso = Math.abs(diasRestantes);
+          listaVencidosHTML += `
+            <div class="bg-slate-900/60 border border-rose-500/30 rounded-xl p-3 flex flex-col justify-between gap-2 shadow-sm">
+              <div class="flex justify-between items-start">
+                <span class="font-mono text-xs text-rose-400 font-semibold">${item.id}</span>
+                <span class="text-xs bg-rose-500/20 text-rose-300 px-2 py-0.5 rounded-md font-bold">${diasAtraso} ${diasAtraso === 1 ? 'dia de atraso' : 'dias de atraso'}</span>
+              </div>
+              <div>
+                <h4 class="text-white text-sm font-semibold truncate">${item.nome}</h4>
+                <p class="text-xs text-slate-400">Usuário: <span class="text-slate-200">${item.usuario}</span></p>
+              </div>
+              <div class="text-[11px] text-slate-400 border-t border-slate-800 pt-1 mt-1 flex justify-between">
+                <span>Vencimento: <strong class="text-slate-300">${formatarDataBR(item.proximaTroca)}</strong></span>
+              </div>
+            </div>
+          `;
+        } else {
+          equipamentosEmDia++;
+          if (diasRestantes <= 30) {
+            badgeStatus = '<span class="px-2 py-1 text-xs rounded-full bg-amber-500/10 text-amber-400 border border-amber-500/20">Próximo (30d)</span>';
+          }
         }
 
         const tr = document.createElement('tr');
@@ -584,16 +662,31 @@
         tabela.appendChild(tr);
       });
 
+      // Atualizar bloco visual de vencidos
+      const containerVencidos = document.getElementById('listaEquipamentosVencidos');
+      const badgeVencidosCount = document.getElementById('contadorVencidosBadge');
+      
+      if (equipamentosVencidos === 0) {
+        containerVencidos.innerHTML = `
+          <div class="col-span-full py-6 text-center text-slate-400 text-sm flex flex-col items-center justify-center gap-2">
+            <i data-lucide="shield-check" class="w-8 h-8 text-emerald-400"></i>
+            <span>Nenhum equipamento vencido no momento. Todos estão em dia!</span>
+          </div>
+        `;
+        badgeVencidosCount.innerText = '0 pendências';
+      } else {
+        containerVencidos.innerHTML = listaVencidosHTML;
+        badgeVencidosCount.innerText = `${equipamentosVencidos} ${equipamentosVencidos === 1 ? 'pendência' : 'pendências'}`;
+      }
+
       lucide.createIcons();
       document.getElementById('totalRegistros').innerText = `Exibindo ${equipamentos.length} registro${equipamentos.length === 1 ? '' : 's'}`;
-      document.getElementById('kpiTotalAtivos').innerText = equipamentos.length;
-      document.getElementById('kpiTrocasPendentes').innerText = trocasPendentes;
-      document.getElementById('kpiFimVida').innerText = equipamentos.filter(e => e.periodicidade >= 36).length;
+      document.getElementById('kpiEquipamentosEmDia').innerText = equipamentosEmDia;
+      document.getElementById('kpiTrocasPendentes').innerText = equipamentosVencidos;
 
-      atualizarGrafico();
+      atualizarGraficos(equipamentosEmDia, equipamentosVencidos);
     }
 
-    // 7. MODAL
     function abrirModal() {
       document.getElementById('inputIndex').value = "-1";
       document.getElementById('modalTitulo').innerText = 'Cadastrar Equipamento';
@@ -611,7 +704,7 @@
       const meses = parseInt(document.getElementById('inputPeriodicidade').value) || 0;
 
       if (dataUltima && meses > 0) {
-        const data = new Date(dataUltima);
+        const data = new Date(dataUltima + 'T00:00:00');
         data.setMonth(data.getMonth() + meses);
         document.getElementById('inputDataPrevista').value = data.toISOString().split('T')[0];
       }

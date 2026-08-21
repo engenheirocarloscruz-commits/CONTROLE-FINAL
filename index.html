@@ -1,0 +1,669 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>ControlApt - Gestão de Troca de Equipamentos</title>
+  <!-- Tailwind CSS CDN -->
+  <script src="https://cdn.tailwindcss.com"></script>
+  <!-- Chart.js CDN -->
+  <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+  <!-- Chart.js DataLabels Plugin -->
+  <script src="https://cdn.jsdelivr.net/npm/chartjs-plugin-datalabels@2"></script>
+  <!-- Lucide Icons -->
+  <script src="https://unpkg.com/lucide@latest"></script>
+  
+  <!-- jsPDF e jsPDF AutoTable CDN -->
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf-autotable/3.5.31/jspdf.plugin.autotable.min.js"></script>
+
+  <!-- Firebase SDKs -->
+  <script src="https://www.gstatic.com/firebasejs/10.8.0/firebase-app-compat.js"></script>
+  <script src="https://www.gstatic.com/firebasejs/10.8.0/firebase-firestore-compat.js"></script>
+</head>
+<body class="bg-slate-900 text-slate-100 font-sans antialiased min-h-screen p-6">
+
+  <div class="max-w-7xl mx-auto space-y-6">
+    
+    <!-- Header -->
+    <header class="flex flex-col md:flex-row md:items-center justify-between gap-4 bg-slate-800/80 p-5 rounded-2xl border border-slate-700/50 backdrop-blur">
+      <div>
+        <h1 class="text-2xl font-bold text-white tracking-wide flex items-center gap-2">
+          <i data-lucide="laptop" class="text-blue-400"></i> Gestão de Troca de Equipamentos
+        </h1>
+        <p class="text-sm text-slate-400">Acompanhamento do ciclo de vida dos ativos corporativos</p>
+      </div>
+
+      <!-- Status da Nuvem e Botões de Ação -->
+      <div class="flex flex-wrap items-center gap-3">
+        <!-- Indicador de Status da Nuvem -->
+        <div id="statusNuvem" class="flex items-center gap-2 text-xs px-3 py-1.5 rounded-lg bg-slate-700/50 border border-slate-600 text-slate-300">
+          <span class="w-2 h-2 rounded-full bg-amber-400 animate-pulse" id="statusPonto"></span>
+          <span id="statusTexto">Aguardando Firebase...</span>
+        </div>
+
+        <!-- Botão Exportar Relatório Analítico em PDF -->
+        <button onclick="exportarRelatorioAnaliticoPDF()" title="Exportar métricas técnicas para PDF" class="bg-slate-700 hover:bg-slate-600 text-slate-200 font-medium text-sm px-4 py-2.5 rounded-lg transition flex items-center gap-2 border border-slate-600 active:scale-95">
+          <i data-lucide="file-text" class="w-4 h-4 text-rose-400"></i>
+          <span>Relatório PDF</span>
+        </button>
+
+        <!-- Botão Salvar na Nuvem -->
+        <button onclick="salvarNaNuvem()" id="btnSalvar" class="bg-blue-600 hover:bg-blue-500 text-white font-medium text-sm px-4 py-2.5 rounded-lg transition flex items-center gap-2 shadow-lg shadow-blue-900/20 active:scale-95">
+          <i data-lucide="cloud-upload" class="w-4 h-4"></i>
+          <span>Salvar na Nuvem</span>
+        </button>
+
+        <!-- Botão Novo Equipamento -->
+        <button onclick="abrirModal()" class="bg-emerald-600 hover:bg-emerald-500 text-white font-medium text-sm px-4 py-2.5 rounded-lg transition flex items-center gap-2 shadow-lg shadow-emerald-900/20">
+          <i data-lucide="plus-circle" class="w-4 h-4"></i> Novo Equipamento
+        </button>
+      </div>
+    </header>
+
+    <!-- KPIs Topo (3 Cards Operacionais) -->
+    <section class="grid grid-cols-1 sm:grid-cols-3 gap-4">
+      <div class="bg-slate-800/60 p-5 rounded-2xl border border-slate-700/50">
+        <div class="flex justify-between items-start text-slate-400 mb-2">
+          <span class="text-xs font-semibold uppercase tracking-wider">Total de Ativos</span>
+          <i data-lucide="laptop" class="w-5 h-5 text-blue-400"></i>
+        </div>
+        <div class="text-2xl font-bold text-white"><span id="kpiTotalAtivos">0</span> <span class="text-sm font-normal text-slate-400">equipamentos</span></div>
+        <p class="text-xs text-emerald-400 mt-2 flex items-center gap-1">
+          <i data-lucide="check-circle-2" class="w-3 h-3"></i> Equipamentos em uso ativo
+        </p>
+      </div>
+
+      <div class="bg-slate-800/60 p-5 rounded-2xl border border-slate-700/50">
+        <div class="flex justify-between items-start text-slate-400 mb-2">
+          <span class="text-xs font-semibold uppercase tracking-wider">Trocas Pendentes</span>
+          <i data-lucide="clock" class="w-5 h-5 text-amber-400"></i>
+        </div>
+        <div class="text-2xl font-bold text-white"><span id="kpiTrocasPendentes">0</span> <span class="text-sm font-normal text-slate-400">este mês</span></div>
+        <p class="text-xs text-amber-400 mt-2 flex items-center gap-1">
+          <i data-lucide="alert-circle" class="w-3 h-3"></i> Requerem atenção
+        </p>
+      </div>
+
+      <div class="bg-slate-800/60 p-5 rounded-2xl border border-slate-700/50">
+        <div class="flex justify-between items-start text-slate-400 mb-2">
+          <span class="text-xs font-semibold uppercase tracking-wider">Fim de Vida Útil (90d)</span>
+          <i data-lucide="calendar-off" class="w-5 h-5 text-rose-400"></i>
+        </div>
+        <div class="text-2xl font-bold text-white"><span id="kpiFimVida">0</span> <span class="text-sm font-normal text-slate-400">equipamentos</span></div>
+        <p class="text-xs text-slate-400 mt-2">Garantia ou ciclo próximo do limite</p>
+      </div>
+    </section>
+
+    <!-- Gráfico Principal -->
+    <section class="bg-slate-800/60 p-5 rounded-2xl border border-slate-700/50">
+      <h2 class="text-base font-semibold text-white mb-4 flex items-center gap-2">
+        <i data-lucide="bar-chart-3" class="w-4 h-4 text-blue-400"></i> Previsão de Substituições (Próximos 12 Meses)
+      </h2>
+      <div class="h-72">
+        <canvas id="forecastChart"></canvas>
+      </div>
+    </section>
+
+    <!-- Tabela Operacional -->
+    <section class="bg-slate-800/60 rounded-2xl border border-slate-700/50 overflow-hidden">
+      <div class="p-5 border-b border-slate-700/50 flex justify-between items-center">
+        <h2 class="text-base font-semibold text-white flex items-center gap-2">
+          <i data-lucide="list-todo" class="w-4 h-4 text-emerald-400"></i> Fila Operacional de Trocas
+        </h2>
+        <span id="totalRegistros" class="text-xs bg-slate-700 px-2.5 py-1 rounded-full text-slate-300">Exibindo 0 registros</span>
+      </div>
+
+      <div class="overflow-x-auto">
+        <table class="w-full text-sm text-left text-slate-300">
+          <thead class="text-xs uppercase bg-slate-900/50 text-slate-400 border-b border-slate-700/50">
+            <tr>
+              <th class="px-6 py-3">ID Ativo</th>
+              <th class="px-6 py-3">Equipamento</th>
+              <th class="px-6 py-3">Usuário</th>
+              <th class="px-6 py-3">Última Troca</th>
+              <th class="px-6 py-3">Periodicidade</th>
+              <th class="px-6 py-3">Próxima Troca</th>
+              <th class="px-6 py-3">Status</th>
+              <th class="px-6 py-3 text-center">Ações</th>
+            </tr>
+          </thead>
+          <tbody id="tabelaCorpo" class="divide-y divide-slate-700/30">
+          </tbody>
+        </table>
+      </div>
+    </section>
+  </div>
+
+  <!-- MODAL DE CADASTRO / EDIÇÃO -->
+  <div id="modalEquipamento" class="fixed inset-0 bg-slate-950/80 backdrop-blur-sm z-50 flex items-center justify-center hidden p-4">
+    <div class="bg-slate-800 border border-slate-700 rounded-2xl w-full max-w-xl overflow-hidden shadow-2xl">
+      <div class="p-5 border-b border-slate-700 flex justify-between items-center">
+        <h3 id="modalTitulo" class="text-lg font-bold text-white flex items-center gap-2">
+          <i data-lucide="laptop" class="text-blue-400"></i> Cadastrar Equipamento
+        </h3>
+        <button onclick="fecharModal()" class="text-slate-400 hover:text-white transition">
+          <i data-lucide="x" class="w-5 h-5"></i>
+        </button>
+      </div>
+
+      <form id="formEquipamento" onsubmit="salvarFormulario(event)" class="p-6 space-y-4">
+        <input type="hidden" id="inputIndex" value="-1">
+        <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+          <div>
+            <label class="block text-xs font-semibold uppercase text-slate-400 mb-1">ID do Ativo</label>
+            <input type="text" id="inputID" required placeholder="Ex: PAT-2026-001" class="w-full bg-slate-900 border border-slate-700 rounded-lg p-2.5 text-slate-100 text-sm focus:border-blue-500 focus:outline-none">
+          </div>
+          <div>
+            <label class="block text-xs font-semibold uppercase text-slate-400 mb-1">Equipamento</label>
+            <input type="text" id="inputNome" required placeholder="Ex: Dell Vostro 5510" class="w-full bg-slate-900 border border-slate-700 rounded-lg p-2.5 text-slate-100 text-sm focus:border-blue-500 focus:outline-none">
+          </div>
+          <div class="md:col-span-2">
+            <label class="block text-xs font-semibold uppercase text-slate-400 mb-1">Usuário Responsável</label>
+            <input type="text" id="inputUsuario" required placeholder="Ex: João Silva" class="w-full bg-slate-900 border border-slate-700 rounded-lg p-2.5 text-slate-100 text-sm focus:border-blue-500 focus:outline-none">
+          </div>
+
+          <div>
+            <label class="block text-xs font-semibold uppercase text-slate-400 mb-1">Última Data de Troca</label>
+            <input type="date" id="inputUltimaTroca" onchange="calcularProximaTroca()" required class="w-full bg-slate-900 border border-slate-700 rounded-lg p-2.5 text-slate-100 text-sm focus:border-blue-500 focus:outline-none">
+          </div>
+          <div>
+            <label class="block text-xs font-semibold uppercase text-slate-400 mb-1">Periodicidade (Meses)</label>
+            <input type="number" id="inputPeriodicidade" min="1" value="36" oninput="calcularProximaTroca()" required class="w-full bg-slate-900 border border-slate-700 rounded-lg p-2.5 text-slate-100 text-sm focus:border-blue-500 focus:outline-none">
+          </div>
+
+          <div class="md:col-span-2">
+            <label class="block text-xs font-semibold uppercase text-slate-400 mb-1">Próxima Data Prevista (Auto)</label>
+            <input type="date" id="inputDataPrevista" readonly class="w-full bg-slate-950 border border-slate-800 text-blue-400 font-semibold rounded-lg p-2.5 text-sm cursor-not-allowed">
+          </div>
+        </div>
+
+        <div class="flex justify-end gap-3 pt-4 border-t border-slate-700">
+          <button type="button" onclick="fecharModal()" class="px-4 py-2 bg-slate-700 hover:bg-slate-600 text-slate-200 text-sm font-medium rounded-lg transition">Cancelar</button>
+          <button type="submit" class="px-4 py-2 bg-emerald-600 hover:bg-emerald-500 text-white text-sm font-medium rounded-lg transition flex items-center gap-2">
+            <i data-lucide="check" class="w-4 h-4"></i>
+            <span>Confirmar</span>
+          </button>
+        </div>
+      </form>
+    </div>
+  </div>
+
+  <script>
+    lucide.createIcons();
+
+    // REGISTRA O PLUGIN DE DATALABELS NO CHART.JS
+    Chart.register(ChartDataLabels);
+
+    // VARIÁVEL GLOBAL PARA O GRÁFICO
+    let meuGrafico = null;
+
+    // 1. CONFIGURAÇÃO DO FIREBASE
+    const firebaseConfig = {
+      apiKey: "AIzaSyDvm-FqoigGt_VS_ARApMFgKCRM8RHR1eI",
+      authDomain: "troca-de-equipamentos.firebaseapp.com",
+      projectId: "troca-de-equipamentos",
+      storageBucket: "troca-de-equipamentos.firebasestorage.app",
+      messagingSenderId: "349303833644",
+      appId: "1:349303833644:web:e600c8400501058734fd89",
+      measurementId: "G-RG0CGN6MTB"
+    };
+
+    let db = null;
+    let firebaseAtivo = false;
+
+    try {
+      firebase.initializeApp(firebaseConfig);
+      db = firebase.firestore();
+      firebaseAtivo = true;
+      atualizarStatusNuvem('conectado', 'Nuvem Conectada');
+    } catch (e) {
+      console.warn("Erro ao conectar com Firebase:", e);
+      atualizarStatusNuvem('erro', 'Erro de Conexão');
+    }
+
+    function atualizarStatusNuvem(estado, texto) {
+      const ponto = document.getElementById('statusPonto');
+      const txt = document.getElementById('statusTexto');
+      txt.innerText = texto;
+
+      ponto.className = "w-2 h-2 rounded-full ";
+      if (estado === 'conectado') {
+        ponto.className += "bg-emerald-400 shadow-sm shadow-emerald-400";
+      } else if (estado === 'salvando') {
+        ponto.className += "bg-blue-400 animate-ping";
+      } else if (estado === 'pendente') {
+        ponto.className += "bg-amber-400 animate-pulse";
+      } else {
+        ponto.className += "bg-rose-500";
+      }
+    }
+
+    // 2. ESTADO DOS DADOS
+    let equipamentos = [
+      { id: "PAT-2024-089", nome: "Dell Latitude 3420", usuario: "Mariana Costa", ultimaTroca: "2023-09-15", periodicidade: 36, proximaTroca: "2026-09-15", status: "Agendado" },
+      { id: "PAT-2024-112", nome: 'MacBook Pro 14"', usuario: "Carlos Eduardo", ultimaTroca: "2024-09-22", periodicidade: 24, proximaTroca: "2026-10-22", status: "Agendado" }
+    ];
+
+    const dadosLocais = localStorage.getItem('controlapt_equipamentos');
+    if (dadosLocais) {
+      try { equipamentos = JSON.parse(dadosLocais); } catch(e){}
+    }
+
+    if (firebaseAtivo) {
+      carregarDaNuvem();
+    } else {
+      renderizarTabela();
+    }
+
+    // 3. OPERAÇÕES FIRESTORE
+    async function carregarDaNuvem() {
+      if (!firebaseAtivo) return;
+      atualizarStatusNuvem('salvando', 'Carregando dados...');
+      
+      try {
+        const snapshot = await db.collection("equipamentos").get();
+        if (!snapshot.empty) {
+          const dadosNuvem = [];
+          snapshot.forEach(doc => {
+            const data = doc.data();
+            dadosNuvem.push({
+              id: data.id || "",
+              nome: data.nome || "",
+              usuario: data.usuario || "",
+              ultimaTroca: data.ultimaTroca || "",
+              periodicidade: Number(data.periodicidade) || 36,
+              proximaTroca: data.proximaTroca || "",
+              status: data.status || "Agendado"
+            });
+          });
+          equipamentos = dadosNuvem;
+          localStorage.setItem('controlapt_equipamentos', JSON.stringify(equipamentos));
+          atualizarStatusNuvem('conectado', 'Nuvem Conectada');
+        } else {
+          salvarNaNuvem();
+        }
+      } catch (err) {
+        console.error("Erro ao carregar do Firebase:", err);
+        atualizarStatusNuvem('erro', 'Erro ao Carregar');
+      }
+      renderizarTabela();
+    }
+
+    async function salvarNaNuvem() {
+      const btn = document.getElementById('btnSalvar');
+      btn.disabled = true;
+      btn.classList.add('opacity-80');
+      atualizarStatusNuvem('salvando', 'Salvando na Nuvem...');
+
+      localStorage.setItem('controlapt_equipamentos', JSON.stringify(equipamentos));
+
+      if (firebaseAtivo) {
+        try {
+          const batch = db.batch();
+          const snapshot = await db.collection("equipamentos").get();
+          
+          snapshot.forEach(doc => {
+            batch.delete(doc.ref);
+          });
+
+          equipamentos.forEach(item => {
+            const newRef = db.collection("equipamentos").doc();
+            batch.set(newRef, {
+              id: item.id || "",
+              nome: item.nome || "",
+              usuario: item.usuario || "",
+              ultimaTroca: item.ultimaTroca || "",
+              periodicidade: Number(item.periodicidade) || 36,
+              proximaTroca: item.proximaTroca || "",
+              status: item.status || "Agendado"
+            });
+          });
+
+          await batch.commit();
+          atualizarStatusNuvem('conectado', 'Dados Salvos na Nuvem!');
+          mostrarToast("Sucesso! Dados salvos no Firebase.");
+        } catch (err) {
+          console.error("Erro ao salvar no Firebase:", err);
+          atualizarStatusNuvem('erro', 'Erro de Permissão/Conexão');
+          mostrarToast(`Erro ao salvar: ${err.message}`, true);
+        }
+      } else {
+        setTimeout(() => {
+          atualizarStatusNuvem('offline', 'Modo Local');
+          mostrarToast("Salvo localmente no navegador.");
+        }, 500);
+      }
+
+      setTimeout(() => {
+        btn.disabled = false;
+        btn.classList.remove('opacity-80');
+      }, 600);
+    }
+
+    // 4. EXPORTAÇÃO DO RELATÓRIO ANALÍTICO EM PDF
+    function exportarRelatorioAnaliticoPDF() {
+      if (!equipamentos || equipamentos.length === 0) {
+        mostrarToast("Nenhum dado disponível para exportação.", true);
+        return;
+      }
+
+      const { jsPDF } = window.jspdf;
+      const doc = new jsPDF({ orientation: 'landscape', unit: 'mm', format: 'a4' });
+      const hoje = new Date();
+      const dataFormatada = hoje.toLocaleDateString('pt-BR');
+
+      // Título do Relatório
+      doc.setFontSize(16);
+      doc.setTextColor(30, 41, 59); // Slate 800
+      doc.text("Relatório Analítico de Gestão de Equipamentos", 14, 18);
+
+      // Subtítulo e Metadados
+      doc.setFontSize(10);
+      doc.setTextColor(100, 116, 139); // Slate 500
+      doc.text(`Gerado em: ${dataFormatada} | Sistema ControlApt`, 14, 25);
+
+      // Definição das colunas e linhas
+      const colunas = [
+        ["ID Ativo", "Equipamento", "Usuário", "Última Troca", "Periodicidade", "Próxima Troca", "Dias Restantes", "Vida Útil", "Risco"]
+      ];
+
+      const linhas = equipamentos.map(item => {
+        const dUltima = item.ultimaTroca ? new Date(item.ultimaTroca) : hoje;
+        const dProxima = item.proximaTroca ? new Date(item.proximaTroca) : hoje;
+        const totalDiasCiclo = Math.max(1, (dProxima - dUltima) / (1000 * 60 * 60 * 24));
+        const diasDecorridos = (hoje - dUltima) / (1000 * 60 * 60 * 24);
+        const diasRestantes = Math.round((dProxima - hoje) / (1000 * 60 * 60 * 24));
+        
+        let pctConsumo = Math.min(100, Math.max(0, (diasDecorridos / totalDiasCiclo) * 100)).toFixed(1);
+        let risco = "BAIXO";
+        if (diasRestantes < 0) risco = "CRÍTICO";
+        else if (diasRestantes <= 30) risco = "ALTO";
+        else if (diasRestantes <= 90) risco = "MÉDIO";
+
+        return [
+          item.id || "-",
+          item.nome || "-",
+          item.usuario || "-",
+          formatarDataBR(item.ultimaTroca),
+          `${item.periodicidade}m`,
+          formatarDataBR(item.proximaTroca),
+          `${diasRestantes}d`,
+          `${pctConsumo}%`,
+          risco
+        ];
+      });
+
+      // Geração da Tabela com AutoTable
+      doc.autoTable({
+        head: colunas,
+        body: linhas,
+        startY: 30,
+        theme: 'grid',
+        headStyles: { 
+          fillColor: [30, 41, 59], 
+          textColor: [255, 255, 255], 
+          fontStyle: 'bold',
+          halign: 'center' 
+        },
+        alternateRowStyles: { fillColor: [248, 250, 252] },
+        styles: { fontSize: 8.5, cellPadding: 3, verticalAlign: 'middle' },
+        didParseCell: function (data) {
+          // Destacar cores baseadas no nível de risco na coluna 'Risco'
+          if (data.section === 'body' && data.column.index === 8) {
+            const val = data.cell.raw;
+            if (val === 'CRÍTICO') {
+              data.cell.styles.textColor = [225, 29, 72];
+              data.cell.styles.fontStyle = 'bold';
+            } else if (val === 'ALTO') {
+              data.cell.styles.textColor = [217, 119, 6];
+              data.cell.styles.fontStyle = 'bold';
+            } else if (val === 'MÉDIO') {
+              data.cell.styles.textColor = [202, 138, 4];
+            } else {
+              data.cell.styles.textColor = [22, 163, 74];
+            }
+          }
+        }
+      });
+
+      // Salva o documento PDF
+      doc.save(`relatorio_analitico_${hoje.toISOString().split('T')[0]}.pdf`);
+      mostrarToast("Relatório PDF gerado com sucesso!");
+    }
+
+    function mostrarToast(mensagem, eErro = false) {
+      const toast = document.createElement('div');
+      toast.className = `fixed bottom-5 right-5 z-50 text-white text-sm px-4 py-3 rounded-xl shadow-xl flex items-center gap-2 border transition-all duration-300 ${eErro ? 'bg-rose-900 border-rose-700' : 'bg-slate-800 border-emerald-500/50'}`;
+      toast.innerHTML = `<i data-lucide="${eErro ? 'alert-circle' : 'check-circle'}" class="${eErro ? 'text-rose-400' : 'text-emerald-400'} w-5 h-5"></i> <span>${mensagem}</span>`;
+      document.body.appendChild(toast);
+      lucide.createIcons();
+
+      setTimeout(() => {
+        toast.style.opacity = '0';
+        setTimeout(() => toast.remove(), 300);
+      }, 4000);
+    }
+
+    // 5. ATUALIZAR GRÁFICO EXIBINDO NOME DO EQUIPAMENTO DENTRO DA BARRA VERTICAL
+    function atualizarGrafico() {
+      const ctx = document.getElementById('forecastChart');
+      if (!ctx) return;
+
+      const hoje = new Date();
+      const anoAtual = hoje.getFullYear();
+      const mesAtual = hoje.getMonth();
+
+      const mesesNomes = ['Jan', 'Fev', 'Mar', 'Abr', 'Mai', 'Jun', 'Jul', 'Ago', 'Set', 'Out', 'Nov', 'Dez'];
+      const labelsGrafico = [];
+      const dadosGrafico = Array(12).fill(0);
+      const nomesPorMes = Array(12).fill(null).map(() => []);
+
+      for (let i = 0; i < 12; i++) {
+        let mesIndex = (mesAtual + i) % 12;
+        let anoOffset = Math.floor((mesAtual + i) / 12);
+        let anoStr = String(anoAtual + anoOffset).slice(-2);
+        labelsGrafico.push(`${mesesNomes[mesIndex]}/${anoStr}`);
+      }
+
+      equipamentos.forEach(item => {
+        if (!item.proximaTroca) return;
+        
+        const partes = item.proximaTroca.split('-');
+        if (partes.length !== 3) return;
+        
+        const anoTroca = parseInt(partes[0]);
+        const mesTroca = parseInt(partes[1]) - 1;
+
+        const diferencaMeses = (anoTroca - anoAtual) * 12 + (mesTroca - mesAtual);
+
+        if (diferencaMeses >= 0 && diferencaMeses < 12) {
+          dadosGrafico[diferencaMeses]++;
+          nomesPorMes[diferencaMeses].push(item.nome);
+        }
+      });
+
+      if (meuGrafico) {
+        meuGrafico.data.labels = labelsGrafico;
+        meuGrafico.data.datasets[0].data = dadosGrafico;
+        meuGrafico.data.datasets[0].nomesEquipamentos = nomesPorMes;
+        meuGrafico.update();
+      } else {
+        meuGrafico = new Chart(ctx.getContext('2d'), {
+          type: 'bar',
+          data: {
+            labels: labelsGrafico,
+            datasets: [{ 
+              label: 'Trocas Planejadas', 
+              data: dadosGrafico, 
+              nomesEquipamentos: nomesPorMes,
+              backgroundColor: '#3b82f6', 
+              borderRadius: 6 
+            }]
+          },
+          options: { 
+            responsive: true, 
+            maintainAspectRatio: false, 
+            plugins: { 
+              legend: { display: false },
+              datalabels: {
+                color: '#ffffff',
+                anchor: 'center',
+                align: 'center',
+                rotation: -90,
+                font: {
+                  weight: '600',
+                  size: 10
+                },
+                formatter: function(value, context) {
+                  const index = context.dataIndex;
+                  const nomes = context.dataset.nomesEquipamentos ? context.dataset.nomesEquipamentos[index] : [];
+                  return nomes.length > 0 ? nomes.join(', ') : '';
+                }
+              }
+            }, 
+            scales: { 
+              x: { grid: { display: false }, ticks: { color: '#94a3b8' } }, 
+              y: { grid: { color: '#334155' }, ticks: { color: '#94a3b8', stepSize: 1 } } 
+            } 
+          }
+        });
+      }
+    }
+
+    // 6. INTERFACE E TABELA
+    function formatarDataBR(dataIso) {
+      if (!dataIso) return '-';
+      const partes = dataIso.split('-');
+      if (partes.length !== 3) return dataIso;
+      return `${partes[2]}/${partes[1]}/${partes[0]}`;
+    }
+
+    function renderizarTabela() {
+      const tabela = document.getElementById('tabelaCorpo');
+      tabela.innerHTML = '';
+      const hoje = new Date();
+
+      let trocasPendentes = 0;
+
+      equipamentos.forEach((item, index) => {
+        const dProxima = item.proximaTroca ? new Date(item.proximaTroca) : hoje;
+        const diasRestantes = Math.round((dProxima - hoje) / (1000 * 60 * 60 * 24));
+        
+        let badgeStatus = '<span class="px-2 py-1 text-xs rounded-full bg-blue-500/10 text-blue-400 border border-blue-500/20">Agendado</span>';
+        
+        if (diasRestantes < 0) {
+          badgeStatus = '<span class="px-2 py-1 text-xs rounded-full bg-rose-500/10 text-rose-400 border border-rose-500/20">Atrasado</span>';
+          trocasPendentes++;
+        } else if (diasRestantes <= 30) {
+          badgeStatus = '<span class="px-2 py-1 text-xs rounded-full bg-amber-500/10 text-amber-400 border border-amber-500/20">Próximo (30d)</span>';
+          trocasPendentes++;
+        }
+
+        const tr = document.createElement('tr');
+        tr.className = 'hover:bg-slate-700/20 transition';
+        tr.innerHTML = `
+          <td class="px-6 py-4 font-mono text-xs text-blue-400">${item.id}</td>
+          <td class="px-6 py-4 font-medium text-white">${item.nome}</td>
+          <td class="px-6 py-4">${item.usuario}</td>
+          <td class="px-6 py-4">${formatarDataBR(item.ultimaTroca)}</td>
+          <td class="px-6 py-4">${item.periodicidade} meses</td>
+          <td class="px-6 py-4 font-medium text-amber-400">${formatarDataBR(item.proximaTroca)}</td>
+          <td class="px-6 py-4">${badgeStatus}</td>
+          <td class="px-6 py-4 text-center">
+            <div class="flex items-center justify-center gap-1">
+              <button onclick="editarEquipamento(${index})" title="Editar" class="p-1.5 hover:bg-slate-700 rounded text-slate-400 hover:text-white transition">
+                <i data-lucide="edit-3" class="w-4 h-4"></i>
+              </button>
+              <button onclick="excluirEquipamento(${index})" title="Eliminar" class="p-1.5 hover:bg-slate-700 rounded text-slate-400 hover:text-rose-400 transition">
+                <i data-lucide="trash-2" class="w-4 h-4"></i>
+              </button>
+            </div>
+          </td>
+        `;
+        tabela.appendChild(tr);
+      });
+
+      lucide.createIcons();
+      document.getElementById('totalRegistros').innerText = `Exibindo ${equipamentos.length} registro${equipamentos.length === 1 ? '' : 's'}`;
+      document.getElementById('kpiTotalAtivos').innerText = equipamentos.length;
+      document.getElementById('kpiTrocasPendentes').innerText = trocasPendentes;
+      document.getElementById('kpiFimVida').innerText = equipamentos.filter(e => e.periodicidade >= 36).length;
+
+      atualizarGrafico();
+    }
+
+    // 7. MODAL
+    function abrirModal() {
+      document.getElementById('inputIndex').value = "-1";
+      document.getElementById('modalTitulo').innerText = 'Cadastrar Equipamento';
+      document.getElementById('formEquipamento').reset();
+      document.getElementById('inputPeriodicidade').value = 36;
+      document.getElementById('modalEquipamento').classList.remove('hidden');
+    }
+
+    function fecharModal() {
+      document.getElementById('modalEquipamento').classList.add('hidden');
+    }
+
+    function calcularProximaTroca() {
+      const dataUltima = document.getElementById('inputUltimaTroca').value;
+      const meses = parseInt(document.getElementById('inputPeriodicidade').value) || 0;
+
+      if (dataUltima && meses > 0) {
+        const data = new Date(dataUltima);
+        data.setMonth(data.getMonth() + meses);
+        document.getElementById('inputDataPrevista').value = data.toISOString().split('T')[0];
+      }
+    }
+
+    function salvarFormulario(event) {
+      event.preventDefault();
+
+      const index = parseInt(document.getElementById('inputIndex').value);
+      const itemNovo = {
+        id: document.getElementById('inputID').value,
+        nome: document.getElementById('inputNome').value,
+        usuario: document.getElementById('inputUsuario').value,
+        ultimaTroca: document.getElementById('inputUltimaTroca').value,
+        periodicidade: parseInt(document.getElementById('inputPeriodicidade').value),
+        proximaTroca: document.getElementById('inputDataPrevista').value,
+        status: "Agendado"
+      };
+
+      if (index >= 0) {
+        equipamentos[index] = itemNovo;
+      } else {
+        equipamentos.push(itemNovo);
+      }
+
+      renderizarTabela();
+      fecharModal();
+      atualizarStatusNuvem('pendente', 'Alterações pendentes (Clique em Salvar)');
+      mostrarToast("Alteração registrada! Clique em 'Salvar na Nuvem'.");
+    }
+
+    function editarEquipamento(index) {
+      const item = equipamentos[index];
+      document.getElementById('inputIndex').value = index;
+      document.getElementById('modalTitulo').innerText = 'Editar Equipamento';
+      document.getElementById('inputID').value = item.id;
+      document.getElementById('inputNome').value = item.nome;
+      document.getElementById('inputUsuario').value = item.usuario;
+      document.getElementById('inputUltimaTroca').value = item.ultimaTroca || '';
+      document.getElementById('inputPeriodicidade').value = item.periodicidade || 36;
+      document.getElementById('inputDataPrevista').value = item.proximaTroca || '';
+      document.getElementById('modalEquipamento').classList.remove('hidden');
+    }
+
+    function excluirEquipamento(index) {
+      if (confirm('Tem certeza que deseja eliminar este equipamento?')) {
+        equipamentos.splice(index, 1);
+        renderizarTabela();
+        atualizarStatusNuvem('pendente', 'Alterações pendentes (Clique em Salvar)');
+        mostrarToast("Equipamento removido. Clique em 'Salvar na Nuvem'.");
+      }
+    }
+  </script>
+</body>
+</html>
